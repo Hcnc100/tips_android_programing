@@ -305,3 +305,68 @@ object ObjectApiServiceModule {
  }
  
  ```
+ 
+ 
+ ## DataStore
+ 
+ ```kotlin
+ 
+ 
+ #### Definition Data Store
+ 
+ class SettingsUser(val context: Context){
+       private val anyKey = stringPreferencesKey("NameKey")
+ 
+       private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = NAME_PREF_USER)
+       
+        fun getObject(): Flow<Object> = context.dataStore.data.map { pref ->
+            Object(
+               any=pref[anyKey]
+            )
+        }
+        
+        suspend fun changeValue(value:Any) = context.dataStore.edit { pref ->
+            pref[anyKey] = value
+        }
+        
+         suspend fun clearPreferences() = context.dataStore.edit { pref ->
+            pref.clear()
+        }
+ }
+ 
+ ```
+ 
+ #### Or using hilt
+ 
+ ```kotlin
+ 
+ @InstallIn(SingletonComponent::class)
+@Module
+object DataStoreModule {
+
+    @Singleton
+    @Provides
+    fun providePreferencesDataStore(@ApplicationContext appContext: Context): DataStore<Preferences> {
+        return PreferenceDataStoreFactory.create(
+            corruptionHandler = ReplaceFileCorruptionHandler(
+                produceNewData = { emptyPreferences() }
+            ),
+            migrations = listOf(SharedPreferencesMigration(appContext,USER_PREFERENCES)),
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { appContext.preferencesDataStoreFile(USER_PREFERENCES) }
+        )
+    }
+}
+
+ 
+ ```
+
+
+#### Depencys
+
+
+```kotlin
+    // * data store
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+```
