@@ -105,3 +105,118 @@ dependencies {
 }
 
 ```
+
+
+## Hilt
+
+### Application
+
+```kotlin
+
+@HiltAndroidApp
+class Application : Application() {
+
+    override fun onCreate() {
+        super.onCreate()
+        val formatStrategy: FormatStrategy = PrettyFormatStrategy.newBuilder()
+            .showThreadInfo(true) // (Optional) Whether to show thread info or not. Default true
+            .methodCount(1) // (Optional) How many method line to show. Default 2
+            .methodOffset(5) // Set methodOffset to 5 in order to hide internal method calls
+            .tag("") // To replace the default PRETTY_LOGGER tag with a dash (-).
+            .build()
+
+        Logger.addLogAdapter(AndroidLogAdapter(formatStrategy))
+
+
+        Timber.plant(object : Timber.DebugTree() {
+
+            override fun log(
+                priority: Int, tag: String?, message: String, t: Throwable?,
+            ) {
+                Logger.log(priority, "@@", message, t)
+            }
+        })
+    }
+}
+
+```
+
+### Manifest
+
+```
+     <application
+       ....
+        android:name=".inject.Application"
+```
+
+### Basic Module
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object SimpleModule {
+
+    @Provides
+    @Singleton
+    fun provideDependency(): RepositoryImpl =
+        RepositoryImpl()
+}
+```
+
+### RepositoryModule
+
+```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun provideObjectRepository(
+        repositoryImpl: RepositoryImpl
+    ):Repository
+```
+
+### Dependencys
+
+```kotlin
+
+plugins {
+
+    id 'dagger.hilt.android.plugin'
+    id 'kotlin-kapt'
+    
+}
+
+
+dependencies {
+
+    // * timber
+    implementation 'com.orhanobut:logger:2.2.0'
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+
+
+    // * hilt
+    def daggerHiltVersion = '2.42'
+    implementation "com.google.dagger:hilt-android:$daggerHiltVersion"
+    kapt "com.google.dagger:hilt-compiler:$daggerHiltVersion"
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    // ? hilt test
+    testImplementation "com.google.dagger:hilt-android-testing:$daggerHiltVersion"
+    androidTestImplementation "com.google.dagger:hilt-android-testing:$daggerHiltVersion"
+    kaptAndroidTest "com.google.dagger:hilt-android-compiler:$daggerHiltVersion"
+ }
+
+```
+#### id plugin search
+
+```kotlin
+ resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'dagger.hilt.android.plugin') {
+                useModule("com.google.dagger:hilt-android-gradle-plugin:2.39.1")
+            }
+        }
+    }
+
+```
