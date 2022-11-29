@@ -78,3 +78,28 @@ data class Object(
     ).build()
 ```
 
+
+### Dependencys
+
+
+```kotlin
+
+// * id plugin
+plugins {
+
+    id 'kotlin-kapt'
+    
+}
+
+dependencies {
+
+// * room
+    def roomVersion="2.4.3"
+    implementation "androidx.room:room-runtime:$roomVersion"
+    kapt "androidx.room:room-compiler:$roomVersion"
+    implementation "androidx.room:room-ktx:$roomVersion"
+    testImplementation "androidx.room:room-testing:$roomVersion"
+
+}
+
+```
