@@ -220,3 +220,88 @@ dependencies {
     }
 
 ```
+
+## Retrofit
+
+```kotlin
+
+#### Main interfaces
+
+interface ObjectApiServices {
+
+
+    @GET(OBJECT_PATH)
+    suspend fun requestAllObjects(): ObjectApiResponse
+    
+    @POST(SIGN_UP_PATH)
+    suspend fun signUp(
+        @Body data: SignUpDTO
+    ): AuthResponse
+    
+      
+    @GET(OBJECT_PATH)
+    suspend fun requestObject(
+        @Header(AUTH_HEADER) token: String,
+    ): ObjectApiResponse
+
+}
+
+ ```
+ 
+ 
+ #### Module Retrofit
+ 
+ ```kotlin
+@Module
+@InstallIn(SingletonComponent::class)
+object ObjectApiServiceModule {
+    private const val NAME_BASE_URL = "BaseUrl"
+
+    @Named(NAME_BASE_URL)
+    @Provides
+    fun provideBaseUrl(): String = BASE_URL_API
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson = GsonBuilder().create()
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(
+        @Named(NAME_BASE_URL) baseUrl: String,
+        gson: Gson,
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl(baseUrl)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build()
+
+    @Singleton
+    @Provides
+    fun provideDogsApiServices(
+        retrofit: Retrofit,
+    ): ObjectApiServices = retrofit.create(ObjectApiServices::class.java)
+}
+ 
+ ```
+ 
+ #### Dependencys
+ 
+ 
+ ```kotlin
+ 
+ dependencies{
+ 
+     // * gson
+    implementation 'com.google.code.gson:gson:2.8.9'
+
+    // * Retrofit
+    def retrofitVersion = "2.9.0"
+    implementation "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofitVersion"
+    implementation "com.squareup.okhttp3:logging-interceptor:4.9.1"
+    implementation "com.squareup.retrofit2:converter-scalars:$retrofitVersion"
+    // ? retrofit test
+ 
+ }
+ 
+ ```
